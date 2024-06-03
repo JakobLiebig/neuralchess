@@ -38,4 +38,4 @@ It consists of 13,123,859 positions evaluated by stockfish. Those evaluations ar
 was < −1.5 and Draw if the cp evaluation was
 between these 2 values"*
 
-The total number of items was reduced to compensate for the uneven distribution of outcomes in the data set. (white: 27%, black: 14%, draw: 59%)
+The total number of positions was reduced to compensate for the uneven distribution of outcomes in the data set. (white: 27%, black: 14%, draw: 59%)
