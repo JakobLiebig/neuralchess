@@ -1,7 +1,7 @@
 # Neural chess
 My goal with this project is to build a neural network-powered chess bot.
 
-The chess bot will utilize alpha-beta search and a value network to find optimal policies.
+The chess bot will utilize minimax with alpha-beta pruning and a value network to find optimal policies.
 The structure of the model, learning parameters, and board representation used for the value network are based on the methods suggested by [Matthia Sabatelli et al. 2018](https://www.ai.rug.nl/~mwiering/GROUP/ARTICLES/ICPRAM_CHESS_DNN_2018.pdf).
 
 *"The Bitmap Input represents all the 64 squares of
@@ -30,3 +30,12 @@ initialized with the following parameters: η = 0.001;
 β1 = 0.90; β2 = 0.99 and ε = 1e − 0.8. The network
 has been trained with Minibatches of 128 samples."*
 
+### Dataset
+The Model will learn through the [Lichess EVALUATIONS](https://database.lichess.org/#evals) data set.
+It consists of 13,123,859 positions evaluated by stockfish. Those evaluations are turned into labels as suggested in the mentioned paper:
+
+*"A label of Winning has been assigned if cp > 1.5, Losing if it
+was < −1.5 and Draw if the cp evaluation was
+between these 2 values"*
+
+The total number of items was reduced to compensate for the uneven distribution of outcomes in the data set. (white: 27%, black: 14%, draw: 59%)
