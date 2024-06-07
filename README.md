@@ -44,7 +44,7 @@ The total number of positions is reduced to compensate for the uneven distributi
 ```
 git clone https://github.com/JakobLiebig/neuralchess.git
 cd neuralchess
-python3 -m venv ./nc_venv && source nc_venv/bin/activate   # setup virtual environment
+python3 -m venv ./.venv && source /.venv/bin/activate   # setup virtual environment
 pip install -r requirements.txt
 python3 play.py
 ```
