@@ -1,9 +1,8 @@
 import torch
-import value_net
 import env
 
-class Func():
-    def __init__(self, nn:value_net.Net, weight:float):
+class NNValueFn():
+    def __init__(self, nn, weight:float):
         self.nn = nn
         self.weight = weight
     
