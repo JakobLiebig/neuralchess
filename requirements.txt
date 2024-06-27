@@ -1,5 +1,7 @@
 torch
 numpy
-chess
-wget
+lightning
+tensorboard
+
 tqdm
+chess

@@ -161,6 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-/data/test/*
-/data/train/*
-/data/lichess_db_eval.jsonl
+/nn/data/lichess/*.csv
+/nn/data/lichess/src/*
+/nn/logs/ColorBasedClassifier/*
+/nn/logs/TurnBasedClassifier/*
