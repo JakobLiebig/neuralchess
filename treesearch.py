@@ -1,4 +1,7 @@
 import numpy as np
+import tqdm
+import copy
+
 from abc import ABC, abstractmethod
 
 class GameBase(ABC):
@@ -12,78 +15,117 @@ class GameBase(ABC):
     def pop(self):
         pass
     @abstractmethod
-    def is_over(self):
+    def is_terminal(self):
         pass
     @abstractmethod
     def get_outcome(self):
         pass
+    @abstractmethod
+    def get_actionspace(self):
+        pass
 
 
-class TreeSearch():
-    def __init__(self, value_fn):
-        self.value_fn = value_fn
+class MCTS():
+    class Node():
+        def __init__(self, parent, action):
+            self.parent = parent
+            self.children = []
 
-    def minimax(self, game: GameBase, depth: int, is_max: bool):
-        if depth == 0:
-            return self.value_fn(game), None
-        elif game.is_over():
-            return game.get_outcome(), None
+            self.action = action
+            self.visits = 0
 
-        best_val = None
-        best_move = None
+            self.value_sum = 0.
+        
+        def calcUcb(self, exploration_bias):
+            n = self.visits
+            N = self.parent.visits
 
-        for move in game.legal_moves():
-            game.push(move)
+            v = self.value_sum / self.visits
+            u = exploration_bias * np.sqrt(np.log(N) / n)
 
-            val, _ = self.minimax(game, depth-1, not is_max)
+            return v + u
+        
+        def select_child(self, exploration_bias):
+            highest_ucb = -np.inf
 
-            if (best_val == None) or (is_max and val > best_val) or (not is_max and val < best_val):
-                best_val = val
-                best_move = move
+            for c in self.children:
+                c_ucb = c.calcUcb(exploration_bias)
+
+                if c_ucb > highest_ucb:
+                    highest_ucb = c_ucb
+                    child = c
             
-            game.pop()
+            return child
         
-        return best_val, best_move
+        def is_fully_expanded(self, game_state):
+            return len(self.children) < len(game_state.possible_moves)
+         
+        def traverse(self, game_state, exploration_bias):
+            current_node = self
+
+            while current_node.is_fully_expanded() and not game_state.is_terminal():
+                current_node = current_node.select_child(exploration_bias)
+
+                game_state.push(current_node.action)
+            
+            return current_node
+        
+        def expand(self, game_state):
+            actionspace = game_state.get_actionspace()
+            action = actionspace[len(self.children)]
+
+            self.children.append(MCTS.Node(self, action))
+
+        def backprop(self, value, game_state):
+            game_state.pop()
+
+            self.value_sum += value
+            self.parent.backprop(-value)
+        
+        def best_action(self):
+            max_visits = -1
+
+            for c in self.children:
+                if c.visits > max_visits:
+                    max_visits = c.visits
+                    best_action = c.action
+            
+            return best_action
     
-
-    def alphabeta(self, game: GameBase, depth: int, is_max: bool, alpha=-np.inf, beta=np.inf):
-        if depth == 0:
-            return self.value_fn(game), None
-        elif game.is_over():
-            return game.get_outcome(), None
-
-        best_val = None
-        best_move = None
-
-        if is_max:
-            for move in game.legal_moves():
-                game.push(move)
-
-                val, _ = self.alphabeta(game, depth-1, False, alpha, beta)
-                
-                if best_val == None or val > best_val:
-                    best_val = val
-                    best_move = move
-                    alpha = max(alpha, best_val)
-                
-                game.pop()
-
-                if beta <= alpha:
-                    break
+    def __init__(self, initial_game_state, exploration_bias = np.sqrt(2)):
+        self.root = MCTS.Node(None, None)
+        self.exploration_bias = exploration_bias
+        self.game_state = initial_game_state
+    
+    def search(self, depth, verbose=True):
+        if verbose:
+            iterator = tqdm.trange(depth)
         else:
-            for move in game.legal_moves():
-                game.push(move)
-
-                val, _ = self.alphabeta(game, depth-1, True, alpha, beta)
-                
-                if best_val == None or val < best_val:
-                    best_val = val
-                    best_move = move
-                    beta = min(beta, best_val)
-                
-                game.pop()
-
-                if beta <= alpha:
-                    break
+            iterator = range(depth)
         
-        return best_val, best_move
+        for i in iterator:
+            # Selection
+            # while traversing the tree each node pushes its action to the game_state to minimize the need for saving each gamestate
+            selected_node = self.root.traverse(self.game_state, self.exploration_bias)
+
+            # Expension
+            if not self.game_state.is_terminal():
+                selected_node = selected_node.expand(self.game_state)
+
+            # Simulation
+            value = self.value_fn(self.game_state)
+            
+            # Backpropagation
+            selected_node.backprop(value)
+        
+        return self.root.best_action() 
+    
+    def observe_action(self, action):
+        self.game_state.push(action)
+        
+        for c in self.root.children:
+            if c.action == action:
+                self.root = c
+                return
+            else:
+                continue
