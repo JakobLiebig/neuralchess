@@ -30,17 +30,18 @@ initialized with the following parameters: η = 0.001;
 β1 = 0.90; β2 = 0.99 and ε = 1e − 0.8. The network
 has been trained with Minibatches of 128 samples."*
 
-### Color based vs. turn based board representation
-The mentioned paper uses a turn based approach to classify positions.
-In this turn based approach the nn maps a chess position to a winning color.
+### Color-based vs. turn-based board representation
+The mentioned paper uses a turn-based approach to classify positions.
+In this turn-based approach, the nn maps a chess position to a winning color.
 
-My turn based approach mirrors the board to always be the pov of the active player.
+My turn-based approach mirrors the board always to be the pov of the active player.
 Then it maps that mirrored board to "winning for active player" or "losing for active player" (or "drawing").
-My idea was, that a position where its whites turn favoring white would be favoring black if the pieces colors would be swapped and it was blacks turn.
+My idea was, that a position where its whites turn favoring white would be favoring black if the piece colors would be swapped and it was blacks turn.
+This should also minimize the number of possible unique inputs into the network. 
 
 ![alt text](https://github.com/JakobLiebig/neuralchess/blob/main/docs/plt.png)
 
-Using my limited amount of training data and hardware my approach was still able to outperform the color based approach discribed in the paper. 
+Using my limited amount of training data and hardware my approach was still able to outperform the color-based approach described in the paper. 
 
 ### Data
 The Model learns through the [Lichess EVALUATIONS](https://database.lichess.org/#evals) data set.
@@ -53,8 +54,8 @@ between these 2 values"*
 The total number of positions is reduced to compensate for the uneven distribution of outcomes. (white: 27%, black: 14%, draw: 59%)
 
 ### Performance
-Neural-chess plays very poorly against humans. Its performance is best in the early stages of the game where it very quickly reaches a position where its very confident its winning.
-after reaching such a position its performance drops drastically and it often looses.
+Neuralchess plays very poorly against humans. Its performance is best in the early stages of the game where it very quickly reaches a position where it's very confident it is winning.
+after reaching such a position its performance drops drastically and it often loses.
 
 ```
 [Event "Jakob vs Neuralchess Round 1"]
@@ -69,9 +70,9 @@ after reaching such a position its performance drops drastically and it often lo
 I think there are two reasons for its bad play:
 1. Limited amount of data and hardware (test accuracy of ~80%)
 2. Using a classifier as a value function
-   Beeing a classifier, the value network was trained to give very confident approximations leading to little to no nuance in its evaluations.
-   Once neuralchess has reached a position with a high proberbility of winning, it evaluates nearly all positions after with nearly the same winning proberbilitys.
-   For example: Winning or loosing a piece after a winning position does not change its approximations.
+   Being a classifier, the value network was trained to give very confident approximations leading to little to no nuance in its evaluations.
+   Once neuralchess has reached a position with a high probability of winning, it evaluates nearly all positions after with the same winning probabilities.
+   For example: Winning or losing a piece after a winning position does not change its approximations.
 
 ### Usage Example for Linux
 ```
