@@ -1,7 +1,7 @@
 # Neural Chess
 Neural chess is a neural-network-powered chess engine.
 
-It utilizes minimax with alpha-beta pruning and a value network to find optimal policies.
+It utilizes Monte Carlo tree search and a value network to find optimal policies.
 Model architecture, learning parameters, and board representation used are based on the methods suggested by [Matthia Sabatelli et al. 2018](https://www.ai.rug.nl/~mwiering/GROUP/ARTICLES/ICPRAM_CHESS_DNN_2018.pdf).
 
 *"The Bitmap Input represents all the 64 squares of
@@ -30,7 +30,19 @@ initialized with the following parameters: η = 0.001;
 β1 = 0.90; β2 = 0.99 and ε = 1e − 0.8. The network
 has been trained with Minibatches of 128 samples."*
 
-### Dataset
+### Color based vs. turn based board representation
+The mentioned paper uses a turn based approach to classify positions.
+In this turn based approach the nn maps a chess position to a winning color.
+
+My turn based approach mirrors the board to always be the pov of the active player.
+Then it maps that mirrored board to "winning for active player" or "losing for active player" (or "drawing").
+My idea was, that a position where its whites turn favoring white would be favoring black if the pieces colors would be swapped and it was blacks turn.
+
+![alt text](https://github.com/JakobLiebig/neuralchess/blob/main/docs/plt.png)
+
+Using my limited amount of training data and hardware my approach was still able to outperform the color based approach discribed in the paper. 
+
+### Data
 The Model learns through the [Lichess EVALUATIONS](https://database.lichess.org/#evals) data set.
 It consists of 13,123,859 positions evaluated by stockfish. Each position is labeled as suggested in the mentioned paper:
 
@@ -40,6 +52,27 @@ between these 2 values"*
 
 The total number of positions is reduced to compensate for the uneven distribution of outcomes. (white: 27%, black: 14%, draw: 59%)
 
+### Performance
+Neural-chess plays very poorly against humans. Its performance is best in the early stages of the game where it very quickly reaches a position where its very confident its winning.
+after reaching such a position its performance drops drastically and it often looses.
+
+```
+[Event "Jakob vs Neuralchess Round 1"]
+[Date "2024.06.30"]
+[White "Jakob"]
+[Black "Neuralchess"]
+[Result "1-0"]
+
+1.e4 f6 2.Nf3 Kf7 3.Bc4+ e6 4.d4 Bb4+ 5.c3 Ba5 6.d5 c5 7.dxe6+ Ke7 8.e5 dxe6 9.Qxd8+ Bxd8 10.exf6+ gxf6 11.b4 Ba5 12.bxa5 Nd7 13.Ba3 e5 14.Bb5 Ke6 15.c4 Rb8 16.Nc3 e4 17.Nxe4 a6 18.Bxd7+ Kxd7 19.Bxc5 f5 20.O-O-O+ Ke6 21.Neg5+ Kf6 22.Rd8 h6 23.Rd6+ Ke7 24.Re6+ Kd8 25.Bb6+ Kd7 26.Ne5#
+```
+
+I think there are two reasons for its bad play:
+1. Limited amount of data and hardware (test accuracy of ~80%)
+2. Using a classifier as a value function
+   Beeing a classifier, the value network was trained to give very confident approximations leading to little to no nuance in its evaluations.
+   Once neuralchess has reached a position with a high proberbility of winning, it evaluates nearly all positions after with nearly the same winning proberbilitys.
+   For example: Winning or loosing a piece after a winning position does not change its approximations.
+
 ### Usage Example for Linux
 ```
 git clone https://github.com/JakobLiebig/neuralchess.git
@@ -47,32 +80,6 @@ cd neuralchess
 python3 -m venv ./.venv && source /.venv/bin/activate   # setup virtual environment
 pip install -r requirements.txt
 python3 play.py
-```
-Output:
 
-```
-Welcome to neural-chess!
-
-Please Note: Enter moves using the UCI format
-
-r n b q k b n r
-p p p p p p p p
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-P P P P P P P P
-R N B Q K B N R
->d2d4
-Neuralchess plays b8a6
-r . b q k b n r
-p p p p p p p p
-n . . . . . . .
-. . . . . . . .
-. . . P . . . .
-. . . . . . . .
-P P P . P P P P
-R N B Q K B N R
->e2e4
-...
+# play using play.ipynb
 ```
