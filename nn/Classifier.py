@@ -72,7 +72,7 @@ class ChessClassifier(L.LightningModule):
             x = x.view((1, -1))
             y = self.forward(x)
 
-        return y
+        return y.view((-1))
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.0001)
