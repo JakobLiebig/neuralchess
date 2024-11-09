@@ -31,8 +31,8 @@ initialized with the following parameters: η = 0.001;
 has been trained with Minibatches of 128 samples."*
 
 ### Color-based vs. turn-based board representation
-The mentioned paper uses a turn-based approach to classify positions.
-In this turn-based approach, the nn maps a chess position to a winning color.
+The mentioned paper uses a color-based approach to classify positions.
+In this approach, the nn maps a chess position to a winning color.
 
 My turn-based approach mirrors the board to always be the pov of the active player.
 Then it maps that mirrored board to "winning for active player" or "losing for active player" (or "drawing").
