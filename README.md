@@ -41,7 +41,7 @@ This also minimizes the number of possible unique inputs into the network.
 
 ![alt text](https://github.com/JakobLiebig/neuralchess/blob/main/docs/plt.png)
 
-Using my limited amount of data and hardware, my approach outperformed my recreation of the model described in the paper. 
+Using my limited amount of data and hardware, the turn-based approach outperformed the color-based approach. 
 
 ### Data
 The Model learns through the [Lichess EVALUATIONS](https://database.lichess.org/#evals) data set.
