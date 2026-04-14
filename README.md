@@ -51,6 +51,7 @@ Our **turn-based approach**: mirrors the board so positions are always evaluated
 - The model only needs to learn one pattern instead of two, reducing required input diversity
 
 Given limited data and resources, training on turn based representations outperforms training on color based.
+
 ![Board representation comparison](https://github.com/JakobLiebig/neuralchess/blob/main/docs/plt.png)
 
 ## Training Data
