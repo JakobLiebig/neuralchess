@@ -24,7 +24,7 @@ jupyter notebook play.ipynb  # Interactive notebook
 - Softmax output over 3 classes (winning, drawing, losing)
 
 **Training configuration:**
-- Optimizer: Adam with η=0.001, β₁=0.90, β₂=0.99, ε=1e-8
+- Optimizer: Adam with η=0.0001, β₁=0.90, β₂=0.999, ε=1e-8
 - Batch size: 128
 - Loss function: categorical crossentropy
 
@@ -32,10 +32,10 @@ jupyter notebook play.ipynb  # Interactive notebook
 
 ### Input Encoding
 
-Each board position is represented as a 768-dimensional vector:
+Each board position is represented as a 768-dimensional binary vector:
 
-- **64 squares** × **12 features** (6 piece types × 2 colors)
-- Each feature is `1` (active player's piece), `-1` (opponent's piece), or `0` (empty)
+- **64 squares** × **12 features** (6 piece types × 2 players: active player and opponent)
+- Each feature is `1` if the corresponding piece stands on that square, `0` otherwise
 - This compactly captures any legal chess position
 
 ### Turn-Based vs. Color-Based Representation

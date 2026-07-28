@@ -20,12 +20,12 @@ def pvs_list_to_score(eval_list):
     eval = eval_list[0]
 
     if 'mate' in eval:
-        return 'Nan', eval['mate']
+        return None, eval['mate']
 
-    return eval['cp'], 'Nan'
+    return eval['cp'], None
 
 def get_prop_winner(cp, mate):
-    if mate != 'Nan':
+    if mate is not None:
         if int(mate) > 0:
             return 'White'
         else:
@@ -59,8 +59,12 @@ df_data = []
 
 with open(src_path, 'r') as source_jsonl:
     for i in trange(len_subset):
-        json_line = json.loads(source_jsonl.readline())
-        
+        line = source_jsonl.readline()
+        if not line:
+            # reached end of file before len_subset positions
+            break
+        json_line = json.loads(line)
+
         fen = json_line['fen']
         pvs, depth = find_deepest_eval(json_line['evals'])
         cp, mate = pvs_list_to_score(pvs)

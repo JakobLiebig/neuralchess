@@ -5,6 +5,7 @@ class TurnBased:
     piece_dict = {'K':0, 'Q':1, 'R':2, 'B':3, 'N':4, 'P':5}
     label_dict = {'Win' : 0, 'Loss' : 1, 'Draw' : 2}
 
+    @staticmethod
     def fen_to_tensor(fen):
         # Initialize a tensor of zeros with shape (2, 6, 8, 8)
         features = torch.zeros((2, 6, 8*8))
@@ -31,7 +32,9 @@ class TurnBased:
             # Determine the board position
             if mirror:
                 activity_encoding = not piece_color
-                position_encoding = 63 - pos_idx
+                # flip ranks only (a1 <-> a8); flipping files too would swap
+                # king- and queenside, which is not a symmetry of chess
+                position_encoding = pos_idx ^ 56
             else:
                 activity_encoding = piece_color
                 position_encoding = pos_idx
@@ -42,6 +45,7 @@ class TurnBased:
         
         return features.view((2*6*8*8))
 
+    @staticmethod
     def label_to_tensor(label):
         label_t = torch.zeros((3))
 
@@ -54,12 +58,13 @@ class ColorBased:
     piece_dict = {'K':0, 'Q':1, 'R':2, 'B':3, 'N':4, 'P':5}
     label_dict = {'White' : 0, 'Draw' : 1, 'Black' : 2}
 
+    @staticmethod
     def fen_to_tensor(fen):
         features = torch.zeros((2, 6, 8 * 8))
 
         fen_sections = fen.split(' ')
         board_fen = fen_sections[0].replace('/', '')
-        active_color = fen_sections[1]
+        active_is_white = fen_sections[1] == 'w'
 
         pos_index = 0
         for c in board_fen:
@@ -70,7 +75,7 @@ class ColorBased:
                 piece_color = c.isupper()
                 piece_str = c.upper()
 
-                activity_encoding = 1. if piece_color == active_color else -1.
+                activity_encoding = 1. if piece_color == active_is_white else -1.
                 piece_encoding = ColorBased.piece_dict[piece_str]
 
                 features[int(piece_color), piece_encoding, pos_index] = activity_encoding
@@ -79,6 +84,7 @@ class ColorBased:
 
         return features.view((2*6*8*8))
 
+    @staticmethod
     def label_to_tensor(label):
         label_t = torch.zeros((3))
 

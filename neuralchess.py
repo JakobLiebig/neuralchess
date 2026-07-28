@@ -32,6 +32,7 @@ class MCTS():
         
         def select_child(self, exploration_bias):
             highest_ucb = None
+            child = None
 
             for c in self.children:
                 c_ucb = c.calcUcb(exploration_bias)
@@ -39,7 +40,7 @@ class MCTS():
                 if highest_ucb == None or c_ucb > highest_ucb:
                     highest_ucb = c_ucb
                     child = c
-            
+
             return child
         
         def is_fully_expanded(self):
@@ -77,12 +78,13 @@ class MCTS():
         
         def best_action(self):
             max_visits = -1
+            best_action = None
 
             for c in self.children:
                 if c.visits > max_visits:
                     max_visits = c.visits
                     best_action = c.action
-            
+
             return best_action
     
     def __init__(self, value_fn, init_pos, exploration_bias = np.sqrt(2)):
@@ -111,9 +113,11 @@ class MCTS():
                 value = self.value_fn(self.game_state)
             else:
                 # game is over take actual results
+                # values must stay finite and on the same [-1, 1] scale as the
+                # network output, otherwise backprop poisons the ucb statistics
                 outcome = self.game_state.outcome()
                 is_draw = outcome.winner == None
-                value = -np.inf if not is_draw else 0. 
+                value = -1. if not is_draw else 0.
 
             # Backpropagation
             selected_node.backprop(value, self.game_state)
@@ -147,24 +151,26 @@ class ValueFunc():
     def __call__(self, game_state):
         fen = game_state.fen()
         features = nn.Encoder.TurnBased.fen_to_tensor(fen)
-        logits = self.nn.predict(features).numpy()
-        
-        win_pct = logits[nn.Encoder.TurnBased.label_dict['Win']]
-        draw_pct = logits[nn.Encoder.TurnBased.label_dict['Draw']]
+        probs = self.nn.predict(features).numpy()
 
-        # weighted sum
-        return win_pct + self.weight * draw_pct
+        win_pct = probs[nn.Encoder.TurnBased.label_dict['Win']]
+        loss_pct = probs[nn.Encoder.TurnBased.label_dict['Loss']]
+        draw_pct = probs[nn.Encoder.TurnBased.label_dict['Draw']]
+
+        # zero-centered value in [-1, 1] so the negamax sign flip in
+        # MCTS.Node.calcUcb is meaningful for both players
+        return win_pct - loss_pct + self.weight * draw_pct
         
 
     def get_eval_dict(self, game_state):
         fen = game_state.fen()
         features = nn.Encoder.TurnBased.fen_to_tensor(fen)
-        logits = self.nn.predict(features).numpy()
-        
+        probs = self.nn.predict(features).numpy()
+
         eval_dict = {}
 
         for k in nn.Encoder.TurnBased.label_dict:
-            eval_dict[k] = logits[nn.Encoder.TurnBased.label_dict[k]]
+            eval_dict[k] = probs[nn.Encoder.TurnBased.label_dict[k]]
         
         return eval_dict
 

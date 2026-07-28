@@ -17,8 +17,7 @@ class ChessClassifier(L.LightningModule):
             nn.Linear(500, 50),
             nn.ReLU(),
             nn.Dropout(p=0.2),
-            nn.Linear(50, labels),
-            nn.Softmax(1)
+            nn.Linear(50, labels)
         )
 
     def forward(self, x):
@@ -70,7 +69,7 @@ class ChessClassifier(L.LightningModule):
         
         with torch.no_grad():
             x = x.view((1, -1))
-            y = self.forward(x)
+            y = F.softmax(self.forward(x), dim=1)
 
         return y.view((-1))
 
