@@ -2,7 +2,7 @@
 
 A neural-network-powered chess engine that combines deep learning with Monte Carlo tree search to find optimal move policies.
 
-Built on [Sabatelli et al. 2018](https://www.ai.rug.nl/~mwiering/GROUP/ARTICLES/ICPRAM_CHESS_DNN_2018.pdf). A novel turn-based board representation improves performance of the value network.
+Built on [Sabatelli et al. 2018](https://www.ai.rug.nl/~mwiering/GROUP/ARTICLES/ICPRAM_CHESS_DNN_2018.pdf), with a novel turn-based board representation that improves the performance of the value network.
 
 ## Quick Start
 
@@ -15,63 +15,61 @@ python3 play.py              # Play via CLI
 jupyter notebook play.ipynb  # Interactive notebook
 ```
 
-## How It Works
+## Architecture
 
-### Architecture
-
-**Network Design:**
-- 3-layer deep MLP with 1048, 500, and 50 hidden units
+**Network design:**
+- 3-layer MLP with 1048, 500, and 50 hidden units
 - ReLU activation on all hidden layers
 - 20% dropout per layer for regularization
-- Softmax output for 3-class probability distribution (Winning/Drawing/Losing)
+- Softmax output over 3 classes (winning, drawing, losing)
 
-**Training Configuration:**
-- Optimizer: Adam with η=0.001, β₁=0.90, β₂=0.99, ε=1e⁻⁸
-- Batch size: 128 samples
-- Loss function: Categorical crossentropy
+**Training configuration:**
+- Optimizer: Adam with η=0.001, β₁=0.90, β₂=0.99, ε=1e-8
+- Batch size: 128
+- Loss function: categorical crossentropy
 
 ## Board Representation
 
-### Binary Input Encoding
+### Input Encoding
 
-The engine represents each board position as a 768-dimensional binary vector:
+Each board position is represented as a 768-dimensional vector:
 
 - **64 squares** × **12 features** (6 piece types × 2 colors)
-- Each square encoded as: `1` (active player's piece), `-1` (opponent's piece), or `0` (empty)
-- Compact yet comprehensive representation of any legal chess position
+- Each feature is `1` (active player's piece), `-1` (opponent's piece), or `0` (empty)
+- This compactly captures any legal chess position
 
-### Turn-Based vs Color-Based Representation
+### Turn-Based vs. Color-Based Representation
 
-The paper uses a **color-based approach**: always maps positions to white's perspective (does white win/lose/draw?)
+The paper uses a **color-based** approach: positions are always mapped to White's perspective, and the network answers "does White win, lose, or draw?"
 
-Our **turn-based approach**: mirrors the board so positions are always evaluated from the active player's perspective (does the active player win/lose/draw?)
+This engine uses a **turn-based** approach instead: the board is mirrored so positions are always evaluated from the active player's perspective, and the network answers "does the active player win, lose, or draw?"
 
 **Why this matters:**
-- Exploits symmetry: a position favoring White on White's move mirrors a position favoring Black on Black's move
-- The model only needs to learn one pattern instead of two, reducing required input diversity
+- It exploits symmetry: a position favoring White on White's move mirrors a position favoring Black on Black's move
+- The model only needs to learn one pattern instead of two, reducing the required input diversity
 
-Given limited data and resources, training on turn based representations outperforms training on color based.
+Given limited data and resources, training on the turn-based representation outperforms the color-based one.
 
 ![Board representation comparison](https://github.com/JakobLiebig/neuralchess/blob/main/docs/plt.png)
 
 ## Training Data
 
-**Dataset:** [Lichess Evaluations](https://database.lichess.org/#evals) - 13.1 million positions evaluated by Stockfish
+**Dataset:** [Lichess Evaluations](https://database.lichess.org/#evals), 13.1 million positions evaluated by Stockfish.
 
-**Position Labels:**
-- **Winning:** centipawn evaluation > 1.5 (27% of dataset)
-- **Losing:** centipawn evaluation < -1.5 (14% of dataset)
-- **Draw:** -1.5 ≤ centipawn ≤ 1.5 (59% of dataset)
+**Position labels:**
+- **Winning:** evaluation > 1.5 (27% of dataset)
+- **Losing:** evaluation < -1.5 (14% of dataset)
+- **Drawing:** -1.5 ≤ evaluation ≤ 1.5 (59% of dataset)
 
-**Class Balancing:** Dataset exhibits extreme class imbalance toward draws. Positions are resampled to create balanced training distributions.
+**Class balancing:** The dataset is heavily skewed toward draws, so positions are resampled to create a balanced training distribution.
 
 ## Results
 
-**Test Accuracy:** ~80%
+**Test accuracy:** ~80%
 
-**Gameplay Performance:** The engine plays poorly against humans. It shows strength in the opening phase where it quickly reaches positions it evaluates as advantageous. However, performance drops significantly in the middlegame and endgame, often squandering early advantages.
+**Gameplay:** The engine plays poorly against humans. It is strongest in the opening, where it quickly reaches positions it evaluates as advantageous, but its play drops off significantly in the middlegame and endgame, often squandering early advantages.
 
-**Sample Game (White vs Neuralchess — White wins):**
+**Sample game (Jakob vs. Neuralchess, 1-0):**
 ```
 [Event "Jakob vs Neuralchess"]
 [Date "2024.06.30"]
@@ -87,15 +85,15 @@ Given limited data and resources, training on turn based representations outperf
 
 ## Why Performance Lags
 
-### 1. Limited Data & Hardware
+### 1. Limited Data and Hardware
 
-With only ~80% test accuracy, there's substantial room for improvement. More computational resources and larger training datasets would directly improve evaluation accuracy.
+At ~80% test accuracy there is substantial room for improvement. More compute and larger training datasets would directly improve evaluation accuracy.
 
-### 2. Classifier vs Regressor Design
+### 2. Classifier vs. Regressor Design
 
-The value network is trained as a **3-class categorical classifier** rather than a continuous **regressor**:
+The value network is trained as a **3-class classifier** rather than a continuous **regressor**:
 
-- Classification produces binary-like confidence scores that saturate at high certainty
-- Once a position achieves high "winning" probability, nearly all subsequent positions receive nearly identical evaluations
-- Cannot represent subtle differences between positions (e.g., up a pawn vs up a piece both output "winning")
-- A regressor would output continuous value estimates (e.g., +2.5 vs +6.0 pawns) enabling better play
+- Classification produces confidence scores that saturate at high certainty
+- Once a position reaches a high "winning" probability, nearly all subsequent positions receive almost identical evaluations
+- Subtle differences between positions are lost: being up a pawn and being up a piece both output "winning"
+- A regressor would output continuous value estimates (e.g. +2.5 vs. +6.0 pawns), enabling better play
